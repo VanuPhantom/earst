@@ -67,3 +67,32 @@ impl<'a> Sender<'a> {
         }
     }
 }
+
+pub struct Receiver<'a> {
+    path: &'a str,
+    receiver: pipe::Receiver
+}
+
+impl<'a> Receiver<'a> {
+    async fn open_receiver(path: &str) -> Result<pipe::Receiver> {
+        loop {
+            match pipe::OpenOptions::new().open_receiver(path) {
+                Ok(sender) => break Ok(sender),
+                /* ENOENT = No such file or directory
+                 * returned whenever the named pipe
+                 * does not exist (yet) */
+                Err(error) if error.raw_os_error() == Some(libc::ENOENT) => {
+                    mkfifo(path)?;
+                },
+                Err(error) => break Err(error)
+            }
+        }
+    }
+
+    pub async fn open(path: &'a str) -> Result<Self> {
+        Ok(Receiver {
+            path,
+            receiver: Self::open_receiver(path).await?
+        })
+    }
+}
