@@ -2,7 +2,7 @@ use std::time::Duration;
 use tokio::{net::unix::pipe, time::sleep};
 use nix::{
     sys::stat::Mode,
-    unistd::mkfifo,
+    unistd::mkfifo as mkfifo_internal,
     libc
 };
 
@@ -11,6 +11,17 @@ pub type Result<T = ()> = std::io::Result<T>;
 pub struct Sender<'a> {
     path: &'a str,
     sender: pipe::Sender
+}
+
+fn mkfifo(path: &str) -> Result {
+    const FIFO_MODE: Mode = match Mode::from_bits(0o666) {
+        Some(mode) => mode,
+        None => {
+            panic!("Couldn't construct FIFO_MODE.")
+        },
+    };
+
+    Ok(mkfifo_internal(path, FIFO_MODE)?)
 }
 
 impl<'a> Sender<'a> {
@@ -27,16 +38,7 @@ impl<'a> Sender<'a> {
                 /* ENOENT = No such file or directory
                  * returned whenever the named pipe
                  * does not exist (yet) */
-                Err(error) if error.raw_os_error() == Some(libc::ENOENT) => {
-                    const FIFO_MODE: Mode = match Mode::from_bits(0o666) {
-                        Some(mode) => mode,
-                        None => {
-                            panic!("Couldn't construct FIFO_MODE.")
-                        },
-                    };
-
-                    mkfifo(path, FIFO_MODE)?;
-                },
+                Err(error) if error.raw_os_error() == Some(libc::ENOENT) => mkfifo(path)?,
                 Err(error) => break Err(error)
             }
         }
