@@ -44,7 +44,7 @@ impl<'a> Sender<'a> {
         }
     }
 
-    pub async fn open(path: &'a str) -> Result<Self> {
+    pub async fn open(path: &'a str) -> Result<Sender<'a>> {
         Ok(Sender {
             path,
             sender: Self::open_sender(path).await?
@@ -89,7 +89,7 @@ impl<'a> Receiver<'a> {
         }
     }
 
-    pub async fn open(path: &'a str) -> Result<Self> {
+    pub async fn open(path: &'a str) -> Result<Receiver<'a>> {
         Ok(Receiver {
             path,
             receiver: Self::open_receiver(path).await?
