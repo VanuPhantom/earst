@@ -2,9 +2,9 @@ use std::time::Duration;
 use tokio::{net::unix::pipe, time::sleep};
 use nix::{
     sys::stat::Mode,
-    unistd::mkfifo
+    unistd::mkfifo,
+    libc
 };
-use libc;
 
 pub type Result<T = ()> = std::io::Result<T>;
 
