@@ -1,6 +1,14 @@
 [package]
 name = "earst"
+description = "A Unix FIFO file library for Rust"
 version = "0.1.0"
+authors = ["Tess Ellenoir Duursma <tess@albird.nl>"]
+repository = "https://github.com/VanuPhantom/earst"
+license = "MIT"
+license-file = "LICENSE"
+keywords = ["fifo", "named-pipe", "unix"]
+categories = ["api-bindings", "filesystem", "os::unix-apis"]
+
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
