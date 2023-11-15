@@ -1,5 +1,5 @@
 use std::time::Duration;
-use tokio::{net::unix::pipe, time::sleep};
+use tokio::{net::unix::pipe, time::sleep, io::AsyncReadExt};
 use nix::{
     sys::stat::Mode,
     unistd::mkfifo as mkfifo_internal,
@@ -94,5 +94,26 @@ impl<'a> Receiver<'a> {
             path,
             receiver: Self::open_receiver(path).await?
         })
+    }
+
+    pub async fn receive(&mut self) -> Result<Vec<u8>> {
+        let mut header = usize::MIN.to_le_bytes();
+
+        loop {
+            match self.receiver.read_exact(&mut header).await {
+                Ok(_) => break,
+                Err(error) if error.kind() == std::io::ErrorKind::UnexpectedEof => {
+                    self.receiver = Self::open_receiver(self.path).await?;
+                },
+                Err(error) => return Err(error)
+            };
+        };
+
+        let message_length = usize::from_le_bytes(header);
+        let mut message = vec![0; message_length];
+
+        self.receiver.read_exact(&mut message).await?;
+
+        Ok(message)
     }
 }
