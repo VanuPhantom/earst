@@ -2,7 +2,7 @@
 name = "earst"
 description = "A Unix FIFO file library for Rust"
 version = "0.1.0"
-authors = ["Tess Ellenoir Duursma <tess@albird.nl>"]
+authors = ["Tess Ellenoir Duursma <tess@albird.nl>","Alexia Mabel Davies <davies.alexia1996@gmail.com>"]
 repository = "https://github.com/VanuPhantom/earst"
 license = "MIT"
 license-file = "LICENSE"
