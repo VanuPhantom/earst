@@ -8,11 +8,12 @@ use libc;
 
 pub type Result<T = ()> = std::io::Result<T>;
 
-pub struct Sender {
+pub struct Sender<'a> {
+    path: &'a str,
     sender: pipe::Sender
 }
 
-impl Sender {
+impl<'a> Sender<'a> {
     async fn open_sender(path: &str) -> Result<pipe::Sender> {
         loop {
             match pipe::OpenOptions::new().open_sender(path) {
@@ -41,9 +42,26 @@ impl Sender {
         }
     }
 
-    pub async fn open(path: &str) -> Result<Self> {
+    pub async fn open(path: &'a str) -> Result<Self> {
         Ok(Sender {
+            path,
             sender: Self::open_sender(path).await?
         })
+    }
+    pub async fn send(&mut self, data: &[u8]) -> Result {
+        let message_length = data.len();
+        let header = &message_length.to_le_bytes();
+        let message = &[header, data].concat()[..];
+
+        loop {
+            match self.sender.try_write(message) {
+                Ok(_) => break Ok(()),
+                // EPIPE = broken pipe
+                Err(error) if error.raw_os_error() == Some(libc::EPIPE) => {
+                    self.sender = Self::open_sender(self.path).await?;
+                },
+                Err(error) => break Err(error)
+            }
+        }
     }
 }
