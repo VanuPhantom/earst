@@ -6,15 +6,17 @@ use nix::{
 };
 use libc;
 
+pub type Result<T = ()> = std::io::Result<T>;
+
 pub struct Sender {
     sender: pipe::Sender
 }
 
 impl Sender {
-    pub async fn open(path: &str) -> Result<Self, std::io::Error> {
-        let sender = loop {
+    async fn open_sender(path: &str) -> Result<pipe::Sender> {
+        loop {
             match pipe::OpenOptions::new().open_sender(path) {
-                Ok(sender) => break sender,
+                Ok(sender) => break Ok(sender),
                 /* ENXIO = No such device or address
                  * returned whenever there isn't a
                  * receiving end for the pipe */
@@ -34,14 +36,14 @@ impl Sender {
 
                     mkfifo(path, FIFO_MODE)?;
                 },
-                Err(error) => {
-                    return Err(error);
-                }
+                Err(error) => break Err(error)
             }
-        };
+        }
+    }
 
+    pub async fn open(path: &str) -> Result<Self> {
         Ok(Sender {
-            sender
+            sender: Self::open_sender(path).await?
         })
     }
 }
