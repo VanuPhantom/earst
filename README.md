@@ -25,3 +25,20 @@ fn main() -> Result<(), std::io::Error> {
 }
 ```
 
+### Receiving messages from other processes
+
+```rs
+use earst::Receiver;
+
+#[tokio::main]
+fn main() {
+    let mut receiver = Receiver::open("~/my-pipe").await.unwrap();
+
+    loop {
+        let message = receiver.receive().await.unwrap();
+        let message = String::from_utf8(message).unwrap();
+
+        println!("{}", message);
+    }
+}
+```
